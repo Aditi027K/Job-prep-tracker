@@ -1,102 +1,78 @@
-const db = require('./db');
-const express = require('express');
-const cors = require('cors');
+// script.js
 
-const app = express();
-const port = 3000;
+function addProblem() {
+  const input = document.getElementById("problem");
+  const value = input.value.trim();
 
-app.use(cors());
-app.use(express.json());
+  if (!value) return;
 
-// Default route
-app.get('/', (req, res) => {
-  res.send('✅ JobPrep Tracker backend is working!');
-});
+  fetch("http://localhost:3000/add-problem", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ title: value })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      showProblemOnScreen({ id: data.id, title: value });
+      input.value = "";
+    })
+    .catch(err => {
+      alert("Something went wrong.");
+      console.error(err);
+    });
+}
 
-// Add a new problem
-app.post("/add-problem", (req, res) => {
-  const { title, solution } = req.body;
+function showProblemOnScreen(problem) {
+  const list = document.getElementById("problemList");
+  const li = document.createElement("li");
 
-  if (!title) {
-    return res.status(400).json({ message: "Title is required" });
-  }
+  const link = document.createElement("a");
+  link.href = `view.html?id=${problem.id}`;
+  link.textContent = problem.title;
+  link.style.marginRight = "10px";
 
-  const query = 'INSERT INTO problems (title, solution) VALUES (?, ?)';
-  db.query(query, [title, solution || ''], (err, result) => {
-    if (err) {
-      console.error('Error inserting:', err);
-      return res.status(500).json({ message: 'Database error' });
-    }
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "🗑️";
+  delBtn.onclick = (e) => {
+    e.preventDefault(); // Prevent link click
+    deleteProblem(problem.id, li);
+  };
 
-    res.status(200).json({ message: 'Problem added!', id: result.insertId });
-  });
-});
+  li.appendChild(link);
+  li.appendChild(delBtn);
+  list.appendChild(li);
+}
 
-// Get all problems
-app.get('/problems', (req, res) => {
-  const query = 'SELECT * FROM problems ORDER BY id DESC';
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching problems:', err);
-      return res.status(500).json({ message: 'Database error' });
-    }
+function loadAllProblems() {
+  const list = document.getElementById("problemList");
+  list.innerHTML = "";  // ⭐ IMPORTANT (clear old list)
 
-    res.status(200).json(results);
-  });
-});
+  fetch("http://localhost:3000/problems")
+    .then(res => res.json())
+    .then(data => {
+      data.forEach((problem) => showProblemOnScreen(problem));
+    })
+    .catch(err => console.error("Error loading problems:", err));
+}
 
-// Delete a problem
-app.delete('/problem/:id', (req, res) => {
-  const id = req.params.id;
-  const query = 'DELETE FROM problems WHERE id = ?';
-  db.query(query, [id], (err, result) => {
-    if (err) {
-      console.error('Error deleting problem:', err);
-      return res.status(500).json({ message: 'Database error' });
-    }
+function deleteProblem(id, listItem) {
+  fetch(`http://localhost:3000/problem/${id}`, {
+    method: "DELETE"
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
 
-    res.status(200).json({ message: 'Problem deleted!' });
-  });
-});
+      // Remove from UI
+      listItem.remove();
 
-// ✅ NEW: Get single problem by ID
-app.get('/problem/:id', (req, res) => {
-  const id = req.params.id;
-  const query = 'SELECT * FROM problems WHERE id = ?';
-  db.query(query, [id], (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(404).json({ message: 'Problem not found' });
-    }
+      // ⭐ Reload fresh data from DB
+      loadAllProblems();
+    })
+    .catch(err => console.error("Error deleting problem:", err));
+}
 
-    res.status(200).json(results[0]);
-  });
-});
-
-// ✅ NEW: Update solution
-app.put('/problem/:id', (req, res) => {
-  const id = req.params.id;
-  const { solution } = req.body;
-
-  console.log("Updating ID:", id);
-  console.log("Solution:", solution);
-
-  const query = 'UPDATE problems SET solution = ? WHERE id = ?';
-
-  db.query(query, [solution, id], (err, result) => {
-    if (err) {
-      console.error("DB Error:", err);
-      return res.status(500).json({ message: 'Error updating solution' });
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Problem not found in DB' });
-    }
-
-    res.status(200).json({ message: 'Solution updated successfully!' });
-  });
-});
-
-// Start server
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
-});
+window.onload = loadAllProblems;
