@@ -1,21 +1,35 @@
-<<<!-- index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>JobPrep Tracker</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>🚀 JobPrep Tracker</h1>
 
+  <!-- Header -->
+  <div class="header">
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" width="60">
+    <h1>📊 JobPrep Tracker</h1>
+    <p>Track your coding practice efficiently</p>
+  </div>
+
+  <!-- Main Card -->
   <div id="tracker">
-    <h2>Add a DSA Problem</h2>
-    <input type="text" id="problem" placeholder="Eg: Two Sum - LeetCode" />
-    <button onclick="addProblem()">Add</button>
+
+    <h2>Add New Problem</h2>
+
+    <input type="text" id="problem" placeholder="Enter problem name (e.g. Two Sum)">
+
+    <button onclick="addProblem()">➕ Add Problem</button>
+
+    <h3 style="margin-top: 20px;">Your Problems</h3>
+
     <ul id="problemList"></ul>
+
   </div>
 
   <script src="script.js"></script>
+
 </body>
 </html>
-
