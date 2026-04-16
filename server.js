@@ -77,13 +77,22 @@ app.put('/problem/:id', (req, res) => {
   const id = req.params.id;
   const { solution } = req.body;
 
+  console.log("Updating ID:", id);
+  console.log("Solution:", solution);
+
   const query = 'UPDATE problems SET solution = ? WHERE id = ?';
+
   db.query(query, [solution, id], (err, result) => {
     if (err) {
+      console.error("DB Error:", err);
       return res.status(500).json({ message: 'Error updating solution' });
     }
 
-    res.status(200).json({ message: 'Solution updated!' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Problem not found in DB' });
+    }
+
+    res.status(200).json({ message: 'Solution updated successfully!' });
   });
 });
 
